@@ -6,7 +6,7 @@ window.onload = (ev: Event) => {
     const app :PIXI.Application = new PIXI.Application();
     document.body.appendChild(app.view);
 
-    PIXI.loader.add('bunny', '../images/bunny.png').load((loader, resources) => {
+    PIXI.loader.add('bunny', 'images/bunny.png').load((loader, resources) => {
         const bunny :PIXI.Sprite = new PIXI.Sprite(resources.bunny.texture);
 
         bunny.x = app.renderer.width / 2;
