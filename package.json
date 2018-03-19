@@ -1,0 +1,26 @@
+{
+  "name": "fittygame",
+  "version": "0.0.1",
+  "license": "MIT",
+  "author": {
+    "name": "Pavel Belski",
+    "email": "genosimple@gmail.com",
+    "url": "https://www.jagholin.net/"
+  },
+  "dependencies": {
+    "pixi.js": "latest"
+  },
+  "private": true,
+  "devDependencies": {
+    "@types/pixi.js": "^4.7.2",
+    "ts-loader": "^4.1.0",
+    "typescript": "^2.7.2",
+    "webpack": "^4.1.1",
+    "webpack-cli": "^2.0.12",
+    "webpack-dev-server": "^3.1.1"
+  },
+  "scripts": {
+    "build": "npx webpack",
+    "serve": "npx webpack-dev-server --open"
+  }
+}
