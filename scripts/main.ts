@@ -1,23 +1,29 @@
 import * as PIXI from "pixi.js";
+import { GameLevel } from "./gamelevel";
+import { GameObject } from "./gameobject";
+import { GameScene } from "./gamescene";
 
 window.onload = (ev: Event) => {
     console.log("loaded");
 
-    const app :PIXI.Application = new PIXI.Application();
+    const app :PIXI.Application = new PIXI.Application({
+        width: 900,
+        height: 900
+    });
     document.body.appendChild(app.view);
 
-    PIXI.loader.add('bunny', 'images/bunny.png').load((loader, resources) => {
-        const bunny :PIXI.Sprite = new PIXI.Sprite(resources.bunny.texture);
+    let mainLevel: GameLevel = new GameLevel();
+    let anObject: GameObject = new GameObject();
+    mainLevel.addObject(anObject);
 
-        bunny.x = app.renderer.width / 2;
-        bunny.y = app.renderer.height / 2;
-
-        bunny.anchor.set(0.5, 0.5);
-
-        app.stage.addChild(bunny);
-
-        app.ticker.add(() => {
-            bunny.rotation += 0.01;
-        });
+    let myScene: GameScene = new GameScene;
+    myScene.setup().then(() => {
+        myScene.setScene(app);
+        document.onkeydown = (event) => {
+            myScene.onKeyDown(event);
+        }
+        document.onkeyup = event => {
+            myScene.onKeyUp(event);
+        }
     });
 };
