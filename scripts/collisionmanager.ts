@@ -150,8 +150,11 @@ function fintersect(a: CollisionForm, b: CollisionForm): boolean
             {
                 // seg.v1 or seg.v2 is an obtuse angle
                 if (Math.min(fdot(fsub(b.center, seg.v1), fsub(b.center, seg.v1)), fdot(fsub(b.center, seg.v2), fsub(b.center, seg.v2))) < b.radius*b.radius)
+                {
                     haveIntersect = true;
-                return false;
+                    return false;
+                }
+                return true;
             }
             let segNormal : Vector2D = {
                 x: seg.v1.y - seg.v2.y,
@@ -263,7 +266,7 @@ export class PolygonForm implements CollisionForm
             const nextI = i === this.vertices.length - 1 ? 0 : i+1;
             const segment = {
                 v1: {x: this.vertices[i].x, y: this.vertices[i].y},
-                v2: {x: this.vertices[nextI].x, y: this.vertices[i].y}
+                v2: {x: this.vertices[nextI].x, y: this.vertices[nextI].y}
             }
             if (! func(segment)) 
                 break;
@@ -451,6 +454,12 @@ export class CollisionManager
         this.collisionForms.push(myForm);
         this.quadTree.addCollisionForm(myForm);
         return myForm;
+    }
+
+    public addStaticForm(aForm: CollisionForm)
+    {
+        this.collisionForms.push(aForm);
+        this.quadTree.addCollisionForm(aForm);
     }
 
     public collisionsWith(colForm: CollisionForm): CollisionForm[]

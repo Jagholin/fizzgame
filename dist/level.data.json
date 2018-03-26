@@ -11,5 +11,10 @@
         {
             "type": "polygon"
         }
-    ]
+    ],
+    "player": {
+        "radius": 25,
+        "xpos": 400,
+        "ypos": 400
+    }
 }
