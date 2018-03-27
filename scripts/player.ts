@@ -1,12 +1,21 @@
 import * as Collisions from "./collisionmanager"
 import * as PIXI from "pixi.js"
+import { observable } from "./utils"
+
+interface Object
+{
+    cameraPos: Collisions.Vector2D;
+}
 
 export class PlayerObject
 {
     private collision: Collisions.CollisionForm = null;
     private displayObject: PIXI.DisplayObject = null;
     private initialized: boolean = false;
-    private cameraPos: Collisions.Vector2D = null;
+    public onPositionChange : ((aValue: any)=>void)[] = [];
+
+    @observable("onPositionChange")
+    private cameraPos: Collisions.Vector2D;
 
     public initFromJson(aJson: any, graphicsParent: PIXI.Container)
     {
@@ -45,11 +54,6 @@ export class PlayerObject
             this.cameraPos.y += dloc.y;
             this.displayObject.position.set(this.cameraPos.x, this.cameraPos.y);
         }
-    }
-
-    public followCamera(view: PIXI.DisplayObject, windowRect: PIXI.Rectangle)
-    {
-        view.position.set(0.5*windowRect.width-this.cameraPos.x, 0.5*windowRect.height-this.cameraPos.y);
     }
 }
 

@@ -24,7 +24,6 @@ export class GameScene
     public setScene(app: PIXI.Application)
     {
         this.appScreen = app.screen;
-        this.updateCamera();
         app.stage = this.stage;
 
         this.keymappings.set("w", (event, type) => {
@@ -61,11 +60,13 @@ export class GameScene
             levelData.playerRadius = 20;
 
         this.level.loadJsonData(levelData, this.stage);
+        this.level.playerObj.onPositionChange.push((newPos: Collisions.Vector2D) => {
+            this.stage.position.set(0.5*this.appScreen.width-newPos.x, 0.5*this.appScreen.height-newPos.y);
+        })
 
         PIXI.ticker.shared.add((deltaNumber: number) => {
             //console.log(`${PIXI.ticker.shared.elapsedMS} ms tick, ${1000 / PIXI.ticker.shared.elapsedMS} FPS`);
             this.handleInput(deltaNumber);
-            this.updateCamera();
         });
     }
 
@@ -104,10 +105,5 @@ export class GameScene
                 return collArray.length === 0;
             })
         }
-    }
-
-    private updateCamera()
-    {
-        this.level.playerObj.followCamera(this.stage, this.appScreen);
     }
 }

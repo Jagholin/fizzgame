@@ -1,5 +1,4 @@
-0. Рефакторинг на GameLevel, GameObject, PlayerObject
-    - Разбить GameScene на три класса
+
 1. Редактор уровней
     - новая сцена по образу GameScene
     - реакция на клик мышки, выбор элементов в GameLevel
