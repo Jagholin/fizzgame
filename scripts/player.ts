@@ -17,7 +17,12 @@ export class PlayerObject
     @observable("onPositionChange")
     private cameraPos: Collisions.Vector2D;
 
-    public initFromJson(aJson: any, graphicsParent: PIXI.Container)
+    public setGraphicsParent(aContainer: PIXI.Container)
+    {
+        aContainer.addChild(this.displayObject);
+    }
+
+    public initFromJson(aJson: any)
     {
         if (this.initialized)
         {
@@ -28,10 +33,9 @@ export class PlayerObject
         (this.displayObject as PIXI.Graphics).beginFill(0xff00ff)
             .drawCircle(0, 0, aJson.radius)
             .endFill();
-        graphicsParent.addChild(this.displayObject);
         this.displayObject.position.set(aJson.xpos, aJson.ypos);
 
-        this.collision = new Collisions.CircleForm;
+        this.collision = new Collisions.CircleForm(this);
         let realColl = this.collision as Collisions.CircleForm;
         realColl.center = { x: aJson.xpos, y: aJson.ypos };
         realColl.radius = aJson.radius;

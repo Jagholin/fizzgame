@@ -5,9 +5,51 @@ html, body {
     overflow: hidden;
 }
 
+.hidden {
+    visibility: hidden;
+    display: none;
+}
+
+.floatmenu {
+    position: fixed;
+}
+
+ul.floatmenu_container {
+    display: flex;
+    flex-flow: column nowrap;
+    padding: 0px;
+    margin: 0px;
+}
+
+ul.floatmenu_container li {
+    background: steelblue;
+    list-style: none;
+    flex: auto;
+}
+
+ul.floatmenu_container li:hover {
+    background: salmon;
+}
+
 .fillclass {
     padding: 0px;
     margin: 0px;
     width: 100%;
     height: 100%;
+}
+
+ul.toolbox_container {
+    display: flex;
+    flex-flow: row nowrap;
+    padding: 0px;
+    margin: 0px;
+}
+
+ul.toolbox_container li {
+    background: salmon;
+    flex: 0 0 50px;
+    list-style: none;
+}
+ul.toolbox_container li :hover{
+    background: steelblue;
 }

@@ -9,7 +9,21 @@
             "color": "0xff0000"
         },
         {
-            "type": "polygon"
+            "type": "polygon",
+            "vertices": [
+                {
+                    "x": 100,
+                    "y": 700
+                },
+                {
+                    "x": 500,
+                    "y": 700
+                },
+                {
+                    "x": 300,
+                    "y": 900
+                }
+            ]
         }
     ],
     "player": {

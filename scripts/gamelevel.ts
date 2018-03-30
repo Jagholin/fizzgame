@@ -1,6 +1,7 @@
 import { GameObject } from "./gameobject"
 import * as Collisions from "./collisionmanager"
 import { PlayerObject } from "./player"
+import * as _ from "lodash"
 
 export class GameLevel
 {
@@ -14,23 +15,43 @@ export class GameLevel
         anObject.setLevel(this);
     }
 
-    public loadJsonData(jsonObject: any, graphicsParent: PIXI.Container)
+    public objectsUnderCursor(x: number, y: number) : GameObject[]
+    {
+        const formsUnderCursor: Collisions.CollisionForm[] = this.collisionManager.formsIntersectingPoint({x: x, y: y});
+        const result: GameObject[] = _.map(formsUnderCursor, (aForm: Collisions.CollisionForm): GameObject => {
+            return aForm.owner as GameObject;
+        });
+        return result;
+    }
+
+    public removeObject(anObject: GameObject)
+    {
+        _.remove(this.objects, (o:GameObject): boolean=>{return o === anObject});
+        anObject.cutLevelAssociation();
+    }
+
+    public init() 
+    {
+        // do something?
+    }
+
+    public loadJsonData(jsonObject: any)
     {
         if (!jsonObject.objects || !jsonObject.player)
             return;
         for (let anObject of jsonObject.objects)
         {
-            if (typeof anObject.type !== "string")
+            if (! _.isString(anObject.type))
                 throw new Error("level object doesnt have a type field")
-            if (anObject.type === "rect")
+            if (anObject.type === "rect" || anObject.type === "polygon")
             {
                 let gameObject = new GameObject;
                 this.addObject(gameObject);
-                gameObject.initFromJson(anObject, graphicsParent);
+                gameObject.initFromJson(anObject);
             }
             console.log(`Object ${anObject.type} loaded successfully`);
         }
 
-        this.playerObj.initFromJson(jsonObject.player, graphicsParent);
+        this.playerObj.initFromJson(jsonObject.player);
     }
 }
