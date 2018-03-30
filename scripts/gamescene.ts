@@ -49,4 +49,9 @@ export class GameScene extends UIScene
             })
         }
     }
+
+    protected _mouseGrab(x: number, y: number)
+    {
+        // noop
+    }
 }

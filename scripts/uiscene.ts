@@ -1,6 +1,7 @@
 import * as PIXI from "pixi.js"
 import * as _ from "lodash"
 import { GameLevel } from "./gamelevel";
+import { Vector2D } from "./collisionmanager";
 
 export abstract class UIScene
 {
@@ -13,6 +14,9 @@ export abstract class UIScene
     protected abstract _onMouseClick (eve: PIXI.interaction.InteractionEvent);
     protected abstract _setLevel(aLevel: GameLevel);
     protected abstract _animationTick(deltaTime: number);
+    protected abstract _mouseGrab(deltaX: number, deltaY: number);
+
+    private _lastMousePos : Vector2D;
     
     public setLevel(aLevel: GameLevel)
     {
@@ -30,6 +34,9 @@ export abstract class UIScene
         this.appScreen = app.screen;
         this.stage.interactive = true;
         this.stage.on("click", this.onMouseClick, this);
+        this.stage.on("mousedown", this.onMouseDown, this);
+        this.stage.on("mousemove", this.onMouseMove, this);
+        this.stage.on("mouseup", this.onMouseUp, this);
         for (let aGameObject of this.level.objects)
         {
             aGameObject.setGraphicsParent(this.stage);
@@ -62,5 +69,27 @@ export abstract class UIScene
         console.log(`local coordinates: ( ${localPoint.x}, ${localPoint.y} )`);
 
         this._onMouseClick(event);
+    }
+
+    public onMouseDown(event: PIXI.interaction.InteractionEvent)
+    {
+        this._lastMousePos = { x: event.data.global.x, y: event.data.global.y };
+        // dont need to do much else here
+    }
+
+    public onMouseUp(event: PIXI.interaction.InteractionEvent)
+    {
+        this._lastMousePos = undefined;
+    }
+
+    public onMouseMove(event: PIXI.interaction.InteractionEvent)
+    {
+        if (this._lastMousePos)
+        {
+            let newMousePos = event.data.global;
+            this._mouseGrab(newMousePos.x - this._lastMousePos.x, newMousePos.y - this._lastMousePos.y);
+            this._lastMousePos.x = newMousePos.x;
+            this._lastMousePos.y = newMousePos.y;
+        }
     }
 }

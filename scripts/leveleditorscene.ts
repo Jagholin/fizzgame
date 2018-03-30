@@ -27,6 +27,11 @@ export class LevelEditorScene extends UIScene
     {
         const position = event.data.getLocalPosition(this.stage);
         const clickedObjects: GameObject[] = this.level.objectsUnderCursor(position.x, position.y);
+        // deselect all selected objects
+        for (let anObject of this.selectedObjects )
+        {
+            anObject.selected = false;
+        }
         let newSelObjects: GameObject[] = [];
         for (let anObject of clickedObjects)
         {
@@ -35,11 +40,22 @@ export class LevelEditorScene extends UIScene
             if (anObject.selected)
                 newSelObjects.push(anObject);
         }
-        this.selectedObjects.forEach((anObject: GameObject) => {
-            if (anObject.selected)
-                newSelObjects.push(anObject);
-        });
         this.selectedObjects = newSelObjects;
+    }
+
+    protected _mouseGrab(x: number, y: number)
+    {
+        if (this.selectedObjects.length === 0)
+        {
+            console.log("mouse grab2");
+            console.log(`dx: ${x}, dy: ${y}`);
+            // Moving the view around
+            this.stage.position.set(this.stage.position.x + x, this.stage.position.y + y);
+        }
+        else
+        {
+            // TODO: Move selected objects
+        }
     }
 
     public saveToJson()

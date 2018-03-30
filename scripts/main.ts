@@ -20,7 +20,7 @@ class Application
         });
         document.body.appendChild(this.app.view);
         // Create a game scene as default
-        this.uiScene = new GameScene;
+        this.uiScene = new LevelEditorScene; 
         // load level from a json file
 
         let myLevel: GameLevel = new GameLevel;
