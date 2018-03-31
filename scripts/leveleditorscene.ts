@@ -55,6 +55,11 @@ export class LevelEditorScene extends UIScene
         else
         {
             // TODO: Move selected objects
+            console.log("objects grab");
+            console.log(`dx: ${x}, dy: ${y}`);
+
+            for (let anObject of this.selectedObjects)
+                anObject.move(x, y);
         }
     }
 

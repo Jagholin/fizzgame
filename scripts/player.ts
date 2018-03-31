@@ -47,7 +47,7 @@ export class PlayerObject
 
     public collisionCheckMove(dloc: Collisions.Vector2D, checkFunc: (f: Collisions.CollisionForm)=>boolean)
     {
-        const newCollision = this.collision.copy();
+        const newCollision = this.collision.shallowCopy();
         (newCollision as Collisions.CircleForm).center = {
             x: this.cameraPos.x + dloc.x, y: this.cameraPos.y + dloc.y
         };

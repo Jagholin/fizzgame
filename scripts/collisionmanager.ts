@@ -217,8 +217,9 @@ class BoundingRect
 {
     topleft: Vector2D;
     bottomRight: Vector2D;
+    translation: Vector2D;
 
-    constructor(x1: number, x2: number, y1: number, y2: number)
+    constructor(x1: number, x2: number, y1: number, y2: number, transX: number = 0, transY: number = 0)
     {
         this.topleft = {
             x: Math.min(x1, x2),
@@ -228,27 +229,35 @@ class BoundingRect
             x: Math.max(x1, x2),
             y: Math.max(y1, y2)
         };
+        this.translation = {
+            x: transX,
+            y: transY
+        };
     }
     public contains(po: Vector2D|BoundingRect): boolean 
     {
+        const myTopLeft = fadd(this.topleft, this.translation);
+        const myBottomRight = fadd(this.bottomRight, this.translation);
         if (po instanceof BoundingRect)
         {
-            if (po.topleft.x >= this.topleft.x && po.topleft.y >= this.topleft.y && po.bottomRight.x <= this.bottomRight.x && po.bottomRight.y <= this.bottomRight.y)
+            const poTopLeft = fadd(po.topleft, po.translation);
+            const poBottomRight = fadd(po.bottomRight, po.translation);
+            if (poTopLeft.x >= myTopLeft.x && poTopLeft.y >= myTopLeft.y && poBottomRight.x <= myBottomRight.x && poBottomRight.y <= myBottomRight.y)
                 return true;
             return false;
         }
-        if (po.x >= this.topleft.x && po.y >= this.topleft.y && po.x <= this.bottomRight.x && po.y <= this.bottomRight.y)
+        if (po.x >= myTopLeft.x && po.y >= myTopLeft.y && po.x <= myBottomRight.x && po.y <= myBottomRight.y)
             return true;
         return false;
     }
     public intersects(br: BoundingRect): boolean
     {
-        const topBound: number = Math.max(br.topleft.y, this.topleft.y);
-        const botBound: number = Math.min(br.bottomRight.y, this.bottomRight.y);
+        const topBound: number = Math.max(br.topleft.y+br.translation.y, this.topleft.y+this.translation.y);
+        const botBound: number = Math.min(br.bottomRight.y+br.translation.y, this.bottomRight.y+this.translation.y);
         if (topBound > botBound)
             return false;
-        const leftBound: number = Math.max(br.topleft.x, this.topleft.x);
-        const rightBound: number = Math.min(br.bottomRight.x, this.bottomRight.x);
+        const leftBound: number = Math.max(br.topleft.x+br.translation.x, this.topleft.x+this.translation.x);
+        const rightBound: number = Math.min(br.bottomRight.x+br.translation.x, this.bottomRight.x+this.translation.x);
         if (leftBound > rightBound)
             return false;
         return true;
@@ -256,23 +265,29 @@ class BoundingRect
 }
 
 type geometryChangeFunc = ((newVerts:any)=>void) | {f: ((newVerts:any)=>void), data: any};
+type positionChangeFunc = ((affForm: CollisionForm)=>void) | {f: (affForm: CollisionForm)=>void, data: any};
 export interface CollisionForm
 {
     readonly boundingRect: BoundingRect;
     readonly owner: any;
+    translation: Vector2D;
     quadNode: QuadNode;
     onGeometryChanged: geometryChangeFunc[];
+    onPositionChanged: positionChangeFunc[];
     intersects(aForm: CollisionForm): boolean;
-    copy(): CollisionForm;
+    shallowCopy(): CollisionForm;
 }
 
 export class PolygonForm implements CollisionForm
 {
-    @observable("onGeometryChanged") // Push doesnt trigger the callback LOL
+    @observable("onGeometryChanged")
     public vertices: Vector2D[];
-    private _bounds: BoundingRect; // TODO: recalculate bounds after changing geometry
+    @observable("onPositionChanged")
+    public translation: Vector2D;
+    private _bounds: BoundingRect;
     public quadNode: QuadNode;
     public onGeometryChanged: geometryChangeFunc[] = [];
+    public onPositionChanged: positionChangeFunc[] = [];
     readonly owner: any;
 
     constructor (formOwner: any)
@@ -281,6 +296,10 @@ export class PolygonForm implements CollisionForm
         this.vertices = [];
         this.onGeometryChanged.push(() => {
             this._bounds = undefined; // force bounding rect recalculation;
+        })
+        this.onPositionChanged.push(() => {
+            if (this._bounds)
+                this._bounds.translation = this.translation;
         })
     }
 
@@ -328,8 +347,8 @@ export class PolygonForm implements CollisionForm
         {
             const nextI = i === this.vertices.length - 1 ? 0 : i+1;
             const segment = {
-                v1: {x: this.vertices[i].x, y: this.vertices[i].y},
-                v2: {x: this.vertices[nextI].x, y: this.vertices[nextI].y}
+                v1: {x: this.vertices[i].x + this.translation.x, y: this.vertices[i].y+this.translation.y},
+                v2: {x: this.vertices[nextI].x + this.translation.x, y: this.vertices[nextI].y+this.translation.y}
             }
             if (! func(segment)) 
                 break;
@@ -353,31 +372,42 @@ export class PolygonForm implements CollisionForm
             if (result.ymin > v.y) result.ymin = v.y;
             if (result.ymax < v.y) result.ymax = v.y;
         }
-        this._bounds = new BoundingRect(result.xmin, result.xmax, result.ymin, result.ymax);
+        this._bounds = new BoundingRect(result.xmin, result.xmax, result.ymin, result.ymax, this.translation.x, this.translation.y);
         return this._bounds;
     }
-    public copy(): CollisionForm
+    public shallowCopy(): CollisionForm
     {
         let result = new PolygonForm(this.owner);
         for (let vert in this.vertices)
         {
             result.vertices.push(this.vertices[vert]);
         }
+        result.translation = {
+            x: this.translation.x,
+            y: this.translation.y
+        };
         return result;
     }
 }
 
 export class CircleForm implements CollisionForm
 {
+    @observable("onPositionChanged")
+    public translation: Vector2D;
     public radius: number;
     public center: Vector2D;
     public quadNode: QuadNode;
     public onGeometryChanged: geometryChangeFunc[] = [];
+    public onPositionChanged: positionChangeFunc[] = [];
     readonly owner: any;
 
     constructor (formOwner: any)
     {
         this.owner = formOwner;
+        this.translation = {
+            x: 0,
+            y: 0
+        };
     }
 
     public intersects(aForm: CollisionForm): boolean
@@ -388,27 +418,38 @@ export class CircleForm implements CollisionForm
     }
     get boundingRect(): BoundingRect
     {
-        return new BoundingRect(this.center.x - this.radius, this.center.x + this.radius, this.center.y - this.radius, this.center.y + this.radius);
+        return new BoundingRect(this.center.x - this.radius, this.center.x + this.radius, this.center.y - this.radius, this.center.y + this.radius, this.translation.x, this.translation.y);
     }
-    public copy(): CollisionForm
+    public shallowCopy(): CollisionForm
     {
         let result = new CircleForm(this.owner);
         result.radius = this.radius;
         result.center = {x: this.center.x, y: this.center.y};
+        result.translation = {
+            x: this.translation.x,
+            y: this.translation.y
+        };
         return result;
     }
 }
 
 export class PointForm implements CollisionForm
 {
+    @observable("onPositionChanged")
+    public translation: Vector2D;
     public center: Vector2D;
     public quadNode: QuadNode;
     public onGeometryChanged: geometryChangeFunc[] = [];
+    public onPositionChanged: positionChangeFunc[] = [];
     readonly owner: any;
 
     constructor (formOwner: any)
     {
         this.owner = formOwner;
+        this.translation = {
+            x: 0,
+            y: 0
+        };
     }
 
     public intersects(aForm: CollisionForm): boolean
@@ -417,12 +458,16 @@ export class PointForm implements CollisionForm
     }
     get boundingRect(): BoundingRect
     {
-        return new BoundingRect(this.center.x - 1.0, this.center.x + 1.0, this.center.y - 1.0, this.center.y + 1.0);
+        return new BoundingRect(this.center.x - 1.0, this.center.x + 1.0, this.center.y - 1.0, this.center.y + 1.0, this.translation.x, this.translation.y);
     }
-    public copy(): CollisionForm
+    public shallowCopy(): CollisionForm
     {
         let result = new PointForm(this.owner);
         result.center = {x: this.center.x, y: this.center.y};
+        result.translation = {
+            x: this.translation.x,
+            y: this.translation.y
+        };
         return result;
     }
 }
@@ -497,42 +542,53 @@ class QuadNode
             //this.forms.push(form);
             this.forms.add(form);
             form.quadNode = this;
-            form.onGeometryChanged.push({
-                data: "quadnodefunc",
-                f: (newVerts) => {
-                    // Check if the form still belongs to the node
-                    let belongsHere: boolean = true;
-                    if (! this.boundingRect.contains(form.boundingRect))
-                        belongsHere = false;
-                    else {
-                        let nodesCount: number = 0;
-                        for (let node of [this.topLeft, this.topRight, this.bottomLeft, this.bottomRight])
+            let changeFormLocation = () => {
+                // Check if the form still belongs to the node
+                let boundRect: BoundingRect = form.boundingRect; 
+                let belongsHere: boolean = true;
+                if (! this.boundingRect.contains(form.boundingRect))
+                    belongsHere = false;
+                else {
+                    let nodesCount: number = 0;
+                    for (let node of [this.topLeft, this.topRight, this.bottomLeft, this.bottomRight])
+                    {
+                        if (node)
                         {
-                            if (node)
+                            if (boundRect.intersects(node.boundingRect))
                             {
-                                if (formBr.intersects(node.boundingRect))
-                                {
-                                    addTo = node;
-                                    ++nodesCount;
-                                }
+                                addTo = node;
+                                ++nodesCount;
                             }
                         }
-                        if (nodesCount < 2) 
-                            belongsHere = false;
                     }
-                    if (belongsHere)
-                        return;
-
-                    // Remove this form from our node
-                    // first remove the notification on change
-                    form.onGeometryChanged = form.onGeometryChanged.filter((val:geometryChangeFunc):boolean => {
-                        if (typeof val === "function") return true;
-                        if (val.data === "quadnodefunc") return false;
-                        return true;
-                    });
-                    this.moveCollisionForm(form);
+                    if (nodesCount < 2) 
+                        belongsHere = false;
                 }
-            })
+                if (belongsHere)
+                    return;
+
+                // Remove this form from our node
+                // first remove the notification on change
+                form.onGeometryChanged = form.onGeometryChanged.filter((val:geometryChangeFunc): boolean => {
+                    if (typeof val === "function") return true;
+                    if (val.data === "quadnodefunc") return false;
+                    return true;
+                });
+                form.onPositionChanged = form.onPositionChanged.filter((val:positionChangeFunc): boolean => {
+                    if (_.isFunction(val)) return true;
+                    if (val.data === "quadnodefunc") return false;
+                    return true;
+                });
+                this.moveCollisionForm(form);
+            };
+            form.onGeometryChanged.push({
+                data: "quadnodefunc",
+                f: changeFormLocation
+            });
+            form.onPositionChanged.push({
+                data: "quadnodefunc",
+                f: changeFormLocation
+            });
         }
         else
             addTo.addCollisionForm(form);
@@ -541,7 +597,21 @@ class QuadNode
     public removeCollisionForm(aForm: CollisionForm): boolean
     {
         aForm.quadNode = undefined;
-        return this.forms.delete(aForm);
+        const success: boolean = this.forms.delete(aForm);
+        if (success)
+        {
+            aForm.onGeometryChanged = aForm.onGeometryChanged.filter((val:geometryChangeFunc): boolean => {
+                if (typeof val === "function") return true;
+                if (val.data === "quadnodefunc") return false;
+                return true;
+            });
+            aForm.onPositionChanged = aForm.onPositionChanged.filter((val:positionChangeFunc): boolean => {
+                if (_.isFunction(val)) return true;
+                if (val.data === "quadnodefunc") return false;
+                return true;
+            });
+        }
+        return success;
     }
 
     public searchNodeFor(point: Vector2D): QuadNode|null

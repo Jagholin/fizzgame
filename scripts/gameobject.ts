@@ -75,9 +75,14 @@ export class GameObject
         }
         let newPoly: Collisions.PolygonForm = new Collisions.PolygonForm(this);
         newPoly.createNGonAroundPoint(n, r, 0, 0);
+        newPoly.translation = {
+            x: x,
+            y: y
+        };
         this.collisionObject = newPoly;
         this.redrawDisplayObject();
         collisionManager.addStaticForm(newPoly);
+        this.displayObject.position.set(x, y);
         this.collisionObject.onGeometryChanged.push((newVerts) => {
             this.redrawDisplayObject();
         });
@@ -112,6 +117,12 @@ export class GameObject
         }
         let aPolygon: Collisions.PolygonForm = new Collisions.PolygonForm(this);
         aPolygon.vertices = rectVertices;
+        if (typeof aJson.xpos === "undefined") aJson.xpos = 0;
+        if (typeof aJson.ypos === "undefined") aJson.ypos = 0;
+        aPolygon.translation = {
+            x: aJson.xpos,
+            y: aJson.ypos
+        };
         this.collisionObject = aPolygon;
         collisionManager.addStaticForm(this.collisionObject);
         this.collisionObject.onGeometryChanged.push((newVerts) => {
@@ -119,6 +130,7 @@ export class GameObject
         });
 
         this.redrawDisplayObject();
+        this.displayObject.position.set(aJson.xpos, aJson.ypos);
     }
 
     public cutLevelAssociation()
@@ -127,5 +139,15 @@ export class GameObject
         this.displayObject.parent.removeChild(this.displayObject);
         this.levelContainer.collisionManager.removeStaticForm(this.collisionObject);
         this._removed = true;
+    }
+
+    public move(deltaX: number, deltaY: number)
+    {
+        const oldTranslation: Collisions.Vector2D = this.collisionObject.translation;
+        this.displayObject.position.set(oldTranslation.x + deltaX, oldTranslation.y + deltaY);
+        this.collisionObject.translation = {
+            x: oldTranslation.x + deltaX,
+            y: oldTranslation.y + deltaY
+        };
     }
 }

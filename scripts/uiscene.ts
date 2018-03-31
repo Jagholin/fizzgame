@@ -29,6 +29,11 @@ export abstract class UIScene
         this._setLevel(aLevel);
     }
 
+    private _tickerFunction(deltaTime: number)
+    {
+        this._animationTick(deltaTime);
+    }
+
     public setScene(app: PIXI.Application)
     {
         this.appScreen = app.screen;
@@ -44,10 +49,12 @@ export abstract class UIScene
         this.level.playerObj.setGraphicsParent(this.stage);
         app.stage = this.stage;
 
-        PIXI.ticker.shared.add((deltaNumber: number) => {
-            //console.log(`${PIXI.ticker.shared.elapsedMS} ms tick, ${1000 / PIXI.ticker.shared.elapsedMS} FPS`);
-            this._animationTick(deltaNumber);
-        });
+        PIXI.ticker.shared.add(this._tickerFunction, this);
+    }
+
+    public unsetScene()
+    {
+        PIXI.ticker.shared.remove(this._tickerFunction, this);
     }
 
     public onKeyDown(event: KeyboardEvent)

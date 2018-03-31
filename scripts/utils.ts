@@ -59,6 +59,7 @@ export function observable(observers: string)
                             let result = realObj["_" + key].map(aFunction);
                             return result;
                         },
+                        splice: Object.getPrototypeOf(realObj["_"+key]).splice.bind(realObj["_"+key]),
                         push(anObject) {
                             let result = realObj["_" + key].push(anObject);
                             this.length ++;
