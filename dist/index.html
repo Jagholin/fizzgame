@@ -6,11 +6,11 @@
     <title>Fitty Game</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" media="screen" href="main.css" />
-    <script src="bundle.js"></script>
+    <script src="main.bundle.js"></script>
 </head>
 <body>
-    <div id="leveledit_tools" style="visibility:hidden;display:none">
-        <ul class="toolbox_container">
+    <div id="leveledit_tools" class="hidden">
+        <ul class="row_flex menu_container">
             <li>
                 <a href="#"><img alt="save" src="./images/savebtn.png" /></a>
             </li>
@@ -22,8 +22,31 @@
             </li>
         </ul>
     </div>
-    <canvas id="mainCanvas" class="fillclass">
-        
-    </canvas>
+    <div class="row_flex">
+        <div id="properties_container" class="hidden column_flex">
+            <table class="properties_table">
+                <thead>
+                    <tr>
+                        <th>
+                            Name
+                        </th>
+                        <th>
+                            Value
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                </tbody>
+            </table>
+        </div>
+        <div id="canvas_container" class="fillclass flex_fill containing_block"><canvas id="mainCanvas" class="fillclass"></canvas>
+            <div id="canvas_status_container" style="margin-top: 20px" class="overlay right_align">
+                <span id="editor_mode" class="hidden">
+
+                </span>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

@@ -1,55 +1,95 @@
-html, body {
-    background-color: silver;
-    padding: 0px;
-    margin: 0px;
-    overflow: hidden;
+html,
+body {
+  background-color: silver;
+  padding: 0px;
+  margin: 0px;
+  overflow: hidden;
 }
-
-.hidden {
-    visibility: hidden;
-    display: none;
+.collapse_border,
+ul.floatmenu_container,
+.fillclass,
+.overlay {
+  padding: 0px;
+  margin: 0px;
 }
-
+.hidden,
+#properties_container.hidden {
+  visibility: hidden;
+  display: none;
+}
 .floatmenu {
-    position: fixed;
+  position: fixed;
 }
-
 ul.floatmenu_container {
-    display: flex;
-    flex-flow: column nowrap;
-    padding: 0px;
-    margin: 0px;
+  display: flex;
+  flex-flow: column nowrap;
 }
-
 ul.floatmenu_container li {
-    background: steelblue;
-    list-style: none;
-    flex: auto;
+  background: steelblue;
+  list-style: none;
+  flex: auto;
 }
-
 ul.floatmenu_container li:hover {
-    background: salmon;
+  background: salmon;
 }
-
 .fillclass {
-    padding: 0px;
-    margin: 0px;
-    width: 100%;
-    height: 100%;
+  width: 100%;
+  height: 100%;
 }
-
-ul.toolbox_container {
-    display: flex;
-    flex-flow: row nowrap;
-    padding: 0px;
-    margin: 0px;
+.row_flex {
+  display: flex;
+  flex-flow: row nowrap;
+  padding: 0px;
+  margin: 0px;
 }
-
-ul.toolbox_container li {
-    background: salmon;
-    flex: 0 0 50px;
-    list-style: none;
+.row_flex > * {
+  flex: 0 0 50px;
 }
-ul.toolbox_container li :hover{
-    background: steelblue;
+.column_flex {
+  display: flex;
+  flex-flow: column;
+  padding: 0px;
+  margin: 0px;
+}
+.column_flex > * {
+  flex: auto;
+}
+ul.menu_container > li {
+  background: salmon;
+  list-style: none;
+}
+ul.menu_container > li:hover {
+  background: steelblue;
+}
+#properties_container {
+  flex-basis: 250px;
+}
+.properties_table {
+  background: lightblue;
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+}
+.properties_table thead tr th:nth-child(1) {
+  width: 50%;
+}
+.properties_table thead tr th:nth-child(2) {
+  width: 50%;
+}
+.overlay {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+}
+.flex_fill {
+  flex: 999 0 200px;
+}
+.containing_block {
+  position: relative;
+  top: 0;
+  left: 0;
+}
+.right_align {
+  text-align: right;
 }

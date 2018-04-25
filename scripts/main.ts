@@ -11,7 +11,7 @@ class Application
     protected editorScene: UIScene;
     protected gameScene: UIScene;
     protected app: PIXI.Application;
-    private currentSceneName: string;
+    private currentScene: UIScene;
 
     constructor() 
     {
@@ -20,7 +20,6 @@ class Application
             width: window.screen.width,
             height: window.screen.height
         });
-        document.body.appendChild(this.app.view);
         // Create a game scene as default
         this.editorScene = new LevelEditorScene; 
         this.gameScene = new GameScene;
@@ -32,38 +31,34 @@ class Application
             this.editorScene.setLevel(myLevel);
             this.gameScene.setLevel(myLevel);
             this.editorScene.setScene(this.app);
-            this.currentSceneName = "editor";
+            this.currentScene = this.editorScene;
             document.onkeydown = (event) => {
                 if (event.key === "p")
                 {
+                    this.currentScene.unsetScene();
                     // key reserved for scene switch
-                    if (this.currentSceneName === "editor")
+                    if (this.currentScene === this.editorScene)
                     {
                         // Switch to game mode
-                        this.editorScene.unsetScene();
-                        this.gameScene.setScene(this.app);
-                        this.currentSceneName = "game";
-                    } else if (this.currentSceneName === "game")
+                        this.currentScene = this.gameScene;
+                    } else if (this.currentScene === this.gameScene)
                     {
                         // switch to editor mode
-                        this.gameScene.unsetScene();
-                        this.editorScene.setScene(this.app);
-                        this.currentSceneName = "editor";
+                        this.currentScene = this.editorScene;
                     }
+                    this.currentScene.setScene(this.app);
                 }
                 else
                 {
-                    if (this.currentSceneName === "editor")
-                        this.editorScene.onKeyDown(event);
-                    else if (this.currentSceneName === "game")
-                        this.gameScene.onKeyDown(event);
+                    this.currentScene.onKeyDown(event);
                 }
             }
             document.onkeyup = event => {
-                if (this.currentSceneName === "editor")
-                    this.editorScene.onKeyUp(event);
-                else if (this.currentSceneName === "game")
-                    this.gameScene.onKeyUp(event);
+                this.currentScene.onKeyUp(event);
+            }
+            document.oncontextmenu = event => {
+                this.currentScene.onContextMenu(event)
+                return false;
             }
         });
     }

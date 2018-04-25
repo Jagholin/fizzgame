@@ -3,6 +3,7 @@ import * as Collisions from "./collisionmanager"
 import { AsyncLoader } from "./utils"
 import { GameLevel } from "./gamelevel";
 import { UIScene } from "./uiscene";
+import { Vector2D } from "./polygontools"
 
 /**
  * Class that represents and shows a game scene
@@ -14,7 +15,7 @@ export class GameScene extends UIScene
 {
     protected _setLevel(aLevel: GameLevel)
     {
-        this.level.playerObj.onPositionChange.push((newPos: Collisions.Vector2D) => {
+        this.level.playerObj.onPositionChange.push((newPos: Vector2D) => {
             this.stage.position.set(0.5*this.appScreen.width-newPos.x, 0.5*this.appScreen.height-newPos.y);
         })
     }
@@ -27,7 +28,7 @@ export class GameScene extends UIScene
     protected _animationTick(deltaTime: number)
     {
         const MAXVELOCITY = 250.0/60.0;
-        let playerVelocity: Collisions.Vector2D = {x: 0, y: 0};
+        let playerVelocity: Vector2D = {x: 0, y: 0};
         if (this.keystates.get("a"))
             playerVelocity.x -= 1;
         if (this.keystates.get("d"))
@@ -53,5 +54,20 @@ export class GameScene extends UIScene
     protected _mouseGrab(x: number, y: number)
     {
         // noop
+    }
+
+    protected _onContextMenu(event: PointerEvent)
+    {
+        // noop
+    }
+
+    protected _onMouseDown(eve: PIXI.interaction.InteractionEvent)
+    {
+        
+    }
+
+    protected _onMouseMove(eve: PIXI.interaction.InteractionEvent)
+    {
+        
     }
 }

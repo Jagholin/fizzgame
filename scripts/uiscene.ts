@@ -1,7 +1,7 @@
 import * as PIXI from "pixi.js"
 import * as _ from "lodash"
 import { GameLevel } from "./gamelevel";
-import { Vector2D } from "./collisionmanager";
+import { Vector2D } from "./polygontools";
 
 export abstract class UIScene
 {
@@ -12,11 +12,16 @@ export abstract class UIScene
     protected level: GameLevel = new GameLevel;
 
     protected abstract _onMouseClick (eve: PIXI.interaction.InteractionEvent);
+    protected abstract _onMouseDown(eve: PIXI.interaction.InteractionEvent);
+    protected abstract _onMouseMove(eve: PIXI.interaction.InteractionEvent);
     protected abstract _setLevel(aLevel: GameLevel);
     protected abstract _animationTick(deltaTime: number);
     protected abstract _mouseGrab(deltaX: number, deltaY: number);
+    protected abstract _onContextMenu(eve: PointerEvent);
 
     private _lastMousePos : Vector2D;
+    private _mouseDownPoint : Vector2D;
+    private _mouseDownTiming : number;
     
     public setLevel(aLevel: GameLevel)
     {
@@ -38,7 +43,7 @@ export abstract class UIScene
     {
         this.appScreen = app.screen;
         this.stage.interactive = true;
-        this.stage.on("click", this.onMouseClick, this);
+        //this.stage.on("click", this.onMouseClick, this);
         this.stage.on("mousedown", this.onMouseDown, this);
         this.stage.on("mousemove", this.onMouseMove, this);
         this.stage.on("mouseup", this.onMouseUp, this);
@@ -73,7 +78,6 @@ export abstract class UIScene
     public onMouseClick(event: PIXI.interaction.InteractionEvent)
     {
         let localPoint = event.data.getLocalPosition(this.stage);
-        console.log(`local coordinates: ( ${localPoint.x}, ${localPoint.y} )`);
 
         this._onMouseClick(event);
     }
@@ -81,12 +85,20 @@ export abstract class UIScene
     public onMouseDown(event: PIXI.interaction.InteractionEvent)
     {
         this._lastMousePos = { x: event.data.global.x, y: event.data.global.y };
+        this._mouseDownPoint = { x: event.data.global.x, y: event.data.global.y };
+        this._mouseDownTiming = Date.now();
         // dont need to do much else here
+        this._onMouseDown(event);
     }
 
     public onMouseUp(event: PIXI.interaction.InteractionEvent)
     {
         this._lastMousePos = undefined;
+        let dx = Math.abs(this._mouseDownPoint.x - event.data.global.x);
+        let dy = Math.abs(this._mouseDownPoint.y - event.data.global.y);
+        let dt = Date.now() - this._mouseDownTiming;
+        if (dx + dy < 6 && dt < 600)
+            this.onMouseClick(event);
     }
 
     public onMouseMove(event: PIXI.interaction.InteractionEvent)
@@ -98,5 +110,11 @@ export abstract class UIScene
             this._lastMousePos.x = newMousePos.x;
             this._lastMousePos.y = newMousePos.y;
         }
+        this._onMouseMove(event);
+    }
+
+    public onContextMenu(event: PointerEvent)
+    {
+        return this._onContextMenu(event);
     }
 }

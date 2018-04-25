@@ -1,0 +1,115 @@
+html, body {
+    background-color: silver;
+    padding: 0px;
+    margin: 0px;
+    overflow: hidden;
+}
+
+.collapse_border {
+    padding: 0px;
+    margin: 0px;
+}
+
+.hidden {
+    visibility: hidden;
+    display: none;
+}
+
+.floatmenu {
+    position: fixed;
+}
+
+ul.floatmenu_container {
+    display: flex;
+    flex-flow: column nowrap;
+    &:extend(.collapse_border);
+    li {
+        background: steelblue;
+        list-style: none;
+        flex: auto;
+        &:hover {
+            background: salmon;
+        }
+    }
+}
+
+.fillclass {
+    &:extend(.collapse_border);
+    width: 100%;
+    height: 100%;
+}
+
+.row_flex {
+    display: flex;
+    flex-flow: row nowrap;
+    padding: 0px;
+    margin: 0px;
+    > * {
+        flex: 0 0 50px;
+    }
+}
+
+.column_flex {
+    display: flex;
+    flex-flow: column;
+    padding: 0px;
+    margin: 0px;
+    >* {
+        flex: auto;
+    }
+}
+
+ul.menu_container > li{
+    background: salmon;
+    list-style: none;
+    &:hover {
+        background: steelblue;
+    }
+}
+
+#properties_container {
+    flex-basis: 250px;
+}
+
+#properties_container.hidden {
+    &:extend(.hidden);
+}
+
+.properties_table {
+    background: lightblue;
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+    thead {
+        tr {
+            th:nth-child(1) {
+                width: 50%;
+            }
+            th:nth-child(2) {
+                width: 50%;
+            }
+        }
+    }
+}
+
+.overlay {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    &:extend(.collapse_border);
+    width: 100%;
+}
+
+.flex_fill {
+    flex: 999 0 200px;
+}
+
+.containing_block {
+    position: relative;
+    top: 0;
+    left: 0;
+}
+
+.right_align {
+    text-align: right;
+}

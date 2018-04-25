@@ -1,36 +1,27 @@
-import { Circle } from "pixi.js";
 import * as _ from "lodash"
 import { observable } from "./utils";
+import { Vector2D, fdot, fadd, fmul, fsub } from "./polygontools"
 
-export interface Vector2D
+export function pointToSegment(aPoint: Vector2D, start: Vector2D, end: Vector2D): number
 {
-    x: number;
-    y: number;
-}
-
-function fdot(a: Vector2D, b:Vector2D) : number
-{
-    return a.x*b.x + a.y*b.y;
-}
-
-function fadd(a: Vector2D, b: Vector2D) : Vector2D
-{
-    return {x: a.x + b.x, y: a.y + b.y};
-}
-
-function fmul(a: Vector2D, b: number) : Vector2D
-{
-    return {x: a.x*b, y: a.y*b};
-}
-
-function fsub(a: Vector2D, b: Vector2D) : Vector2D
-{
-    return fadd(a, fmul(b, -1.0));
+    if (fdot(fsub(end, start), fsub(aPoint, start)) < -0.01 || fdot(fsub(start, end), fsub(aPoint, end)) < -0.01)
+    {
+        // start or end is at an obtuse angle
+        return Math.sqrt(Math.min(fdot(fsub(aPoint, start), fsub(aPoint, start)), fdot(fsub(aPoint, end), fsub(aPoint, end))));
+    }
+    let segNormal : Vector2D = {
+        x: start.y - end.y,
+        y: end.x - start.x
+    };
+    const normFactor: number = 1.0 / Math.sqrt(fdot(segNormal, segNormal));
+    segNormal.x *= normFactor; segNormal.y *= normFactor;
+    const dist1: number = fdot(segNormal, start);
+    const dist2: number = fdot(segNormal, aPoint);
+    return Math.abs(dist1 - dist2);
 }
 
 export function fraysegment(aRay: {start: Vector2D, direction: Vector2D}, aSegment: {v1: Vector2D, v2: Vector2D}, margin?: number): {result: boolean, inttype: string, intpoint?: Vector2D}
 {
-    //const BIGNUM = 10000.0;
     let realMargin: number = (typeof margin === "undefined") ? 0.01 : margin;
     const segmentDir: Vector2D = {
         x: aSegment.v2.x - aSegment.v1.x,

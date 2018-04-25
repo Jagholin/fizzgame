@@ -1,10 +1,11 @@
 import * as Collisions from "./collisionmanager"
 import * as PIXI from "pixi.js"
 import { observable } from "./utils"
+import { Vector2D } from "./polygontools";
 
 interface Object
 {
-    cameraPos: Collisions.Vector2D;
+    cameraPos: Vector2D;
 }
 
 export class PlayerObject
@@ -15,7 +16,7 @@ export class PlayerObject
     public onPositionChange : ((aValue: any)=>void)[] = [];
 
     @observable("onPositionChange")
-    private cameraPos: Collisions.Vector2D;
+    private cameraPos: Vector2D;
 
     public setGraphicsParent(aContainer: PIXI.Container)
     {
@@ -45,7 +46,7 @@ export class PlayerObject
         this.initialized = true;
     }
 
-    public collisionCheckMove(dloc: Collisions.Vector2D, checkFunc: (f: Collisions.CollisionForm)=>boolean)
+    public collisionCheckMove(dloc: Vector2D, checkFunc: (f: Collisions.CollisionForm)=>boolean)
     {
         const newCollision = this.collision.shallowCopy();
         (newCollision as Collisions.CircleForm).center = {

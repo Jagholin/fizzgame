@@ -24,7 +24,14 @@ export function observable(observers: string)
         });
         Object.defineProperty(construct, key, {
             set(aValue) {
-                this["_" + key] = aValue;
+                if (!_.isUndefined(aValue.data) && !_.isUndefined(aValue.muted))
+                {
+                    this["_" + key] = aValue.data;
+                    if (aValue.muted) return;
+                }
+                else
+                    this["_" + key] = aValue;
+
                 for (let f of this[observers])
                 {
                     let realFunc = typeof(f) === "function" ? f : f.f;
@@ -74,6 +81,8 @@ export function observable(observers: string)
                         length : realObj["_" + key].length
                     }
                 }
+
+                proxy.toString = this["_" + key].toString.bind(this["_" + key]);
 
                 for (let aKey of Object.keys(this["_" + key]))
                 {
