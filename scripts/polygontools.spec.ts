@@ -64,7 +64,7 @@ describe("Polygon tools module", () => {
 
     const arrOrVec2D = a => _.isArray(a)?array2Vector(a):a;
 
-    const vec2DArrEqual = (a: (number[]|T.Vector2D)[], b: (number[]|T.Vector2D)[]) => _.zip(a, b).every(val => vec2DEqual(arrOrVec2D(val[0]), arrOrVec2D(val[1])));
+    const vec2DArrEqual = (a: (number[]|T.Vector2D)[], b: (number[]|T.Vector2D)[]) => a.length === b.length && _.zip(a, b).every(val => vec2DEqual(arrOrVec2D(val[0]), arrOrVec2D(val[1])));
     const cvec2DArrEqual = _.curry(vec2DArrEqual);
 
     use((chai, utils) => {
@@ -85,23 +85,23 @@ describe("Polygon tools module", () => {
                 a.nodes.map(x => x.position)
             );
             // Check that all nodes in b have right edges
-            _.zip(a.nodes, b).forEach((x) => {
-                _.zip(x[0].edges, x[1].edges).forEach((m) => {
+            _.zip(a.nodes, b).forEach((x, nodeindex) => {
+                _.zip(x[0].edges, x[1].edges).forEach((m, edgeseqindex) => {
                     let arrEqual = vec2DArrEqual(a.edges[m[0]].points, m[1].edgePoints);
                     // Check that all edges point to the right nextNode
                     let nextNodeEqual = b[a.edges[m[0]].nextNode] === m[1].nextNode;
                     //return arrEqual && nextNodeEqual;
                     this.assert(arrEqual, 
-                        "Expected edge points to be #{exp} but got #{act}",
+                        `Expected edge points to be #{exp} but got #{act}, while testing node ${nodeindex}`,
                         "",
                         a.edges[m[0]].points,
                         m[1].edgePoints
                     );
                     this.assert(nextNodeEqual,
-                        "Expected next node to be #{exp} but got #{act}",
+                        `Expected next node to be #{exp} but got #{act}, while testing edgeseq [${edgeseqindex}]=${m[0]} in node ${nodeindex}`,
                         "",
-                        b[a.edges[m[0]].nextNode],
-                        m[1].nextNode
+                        a.edges[m[0]].nextNode,
+                        b.indexOf(m[1].nextNode)
                     );
                 });
             })
@@ -122,35 +122,100 @@ describe("Polygon tools module", () => {
         let atestCase1 = [[6, 1], [3, 3], [5, 5], [8, 4]];
         let btestCase1 = [[9, 1], [6, 3], [9, 5]];
         let expResult = {
-            nodes: [{
-                    position: [6.92308, 2.38462],
-                    edges: [0, 2, 1, 3]
-                },
+            nodes: [
                 {
                     position: [7.66667, 4.11111],
                     edges: [2, 0, 3, 1]
+                },
+                {
+                    position: [6.92308, 2.38462],
+                    edges: [0, 2, 1, 3]
                 }
             ],
             edges: [{
                     points: [[6, 1], [3, 3], [5, 5]],
-                    nextNode: 1
+                    nextNode: 0
                 },
                 {
                     points: [[8, 4]],
-                    nextNode: 0
+                    nextNode: 1
                 },
                 {
                     points: [[6, 3]],
-                    nextNode: 1
-                }, 
+                    nextNode: 0
+                },
                 {
                     points: [[9, 5], [9, 1]],
-                    nextNode: 0
+                    nextNode: 1
                 }
             ]
-        }
+        };
         
         let res = T.polyIntersect(atestCase1.map(array2Vector), btestCase1.map(array2Vector));
         expect(res).to.be.intersectResult(expResult);
+
+        let atestCase2 = [[5, 5], [6, 4], [3, 2], [6, 0], [9, 1], [8, 4], [10, 4], [11, 1], [8, -1], [4, -1], [2, 2], [3, 4]];
+        let btestCase2 = [[7, 7], [10, 6], [10, 5], [9, 3], [8.5, 3.55], [8, 5], [7, 5], [1, 3], [2, 5], [5, 7]];
+        let expResult2 = {
+            nodes: [
+                {
+                    position: [5.5, 4.5],
+                    edges: [4, 3, 7, 0]
+                },
+                {
+                    position: [9.5, 4],
+                    edges: [6, 1, 5, 2]
+                },
+                {
+                    position: [8.34483, 4],
+                    edges: [0, 7, 1, 6]
+                },
+                {
+                    position: [2.8, 3.6],
+                    edges: [2, 5, 3, 4]
+                }
+            ],
+            edges: [
+                {// 0
+                    points: [[6, 4], [3, 2], [6, 0], [9, 1], [8, 4]],
+                    nextNode: 2
+                },
+                {// 1
+                    points: [],
+                    nextNode: 1
+                },
+                {// 2
+                    points: [[10, 4], [11, 1], [8, -1], [4, -1], [2, 2]],
+                    nextNode: 3
+                },
+                {// 3
+                    points: [[3, 4], [5, 5]],
+                    nextNode: 0
+                },
+                {// 4
+                    points: [],
+                    nextNode: 3
+                }, 
+                {// 5
+                    points: [[1, 3], [2, 5], [5, 7], [7, 7], [10, 6], [10, 5]],
+                    nextNode: 1
+                },
+                {// 6
+                    points: [[9, 3], [8.5, 3.55]],
+                    nextNode: 2
+                },
+                {// 7
+                    points: [[8, 5], [7, 5]],
+                    nextNode: 0
+                }
+            ]
+        };
+
+        expect(T.convexTest(atestCase2.map(array2Vector))).to.be.false;
+        expect(T.convexTest(btestCase2.map(array2Vector))).to.be.false;
+        expect(T.windTest(atestCase2.map(array2Vector))).to.equal("ccw");
+        expect(T.windTest(btestCase2.map(array2Vector))).to.equal("ccw");
+
+        expect(T.polyIntersect(atestCase2.map(array2Vector), btestCase2.map(array2Vector))).to.be.intersectResult(expResult2);
     })
 })

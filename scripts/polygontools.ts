@@ -238,11 +238,13 @@ export class NodeData
 {
     public position: Vector2D;
     public edges: EdgeSequence[] = [];
+    public nodeLoops: Vector2D[][] = [];
 }
 export class EdgeSequence
 {
     public edgePoints: Vector2D[] = [];
     public nextNode: NodeData;
+    public visited: boolean = false;
 }
 
 export function polyIntersect(verts1: Vector2D[], verts2: Vector2D[]): NodeData[]
@@ -254,6 +256,10 @@ export function polyIntersect(verts1: Vector2D[], verts2: Vector2D[]): NodeData[
     // Arrays of intersect result for each edge
     let edges1: Map<number, IntersectResult[]> = new Map; 
     let edges2: Map<number, IntersectResult[]> = new Map;
+    for (let i = 0; i < verts1.length; ++i)
+        edges1.set(i, []);
+    for (let i = 0; i < verts2.length; ++i)
+        edges2.set(i, []);
     for (let i = 0; i < verts1.length; ++i)
     {
         // For the current edge (verts1[i], verts1[next(i)]), find all intersections with poly 2 
@@ -267,11 +273,6 @@ export function polyIntersect(verts1: Vector2D[], verts2: Vector2D[]): NodeData[
                 node.position = intResult.point;
                 intersectPoints.push(node);
                 intResult.data = node;
-                // Mark intersection for both edges
-                if (! edges1.has(i))
-                    edges1.set(i, []);
-                if (! edges2.has(j))
-                    edges2.set(j, []);
                 edges1.get(i).push(intResult);
                 edges2.get(j).push(intResult);
             }
@@ -291,12 +292,15 @@ export function polyIntersect(verts1: Vector2D[], verts2: Vector2D[]): NodeData[
         let firstNode: NodeData;
         for (let [edgeIndex, edgeIntersections] of edgeIntResults)
         {
+            if (edgeIntersections.length === 0)
+                continue;
             if (typeof firstCutEdgeIndex === "undefined")
                 firstCutEdgeIndex = edgeIndex;
             edgeIntersections.sort((a, b) => a.acoeff-b.acoeff);
                 // Finish currentEdgeSequence
             if (currentEdgeSequence) for (let i = lastEdgeIndex+1; i <= edgeIndex; ++i)
             {
+                //console.log(`   -> new edge point:(${polyVertices[i].x}, ${polyVertices[i].y})`);
                 currentEdgeSequence.edgePoints.push(polyVertices[i]);
             }
             // create edge sequences, get node at the start
@@ -310,6 +314,7 @@ export function polyIntersect(verts1: Vector2D[], verts2: Vector2D[]): NodeData[
                     currentEdgeSequence.nextNode = myNode;
                     myNode.edges.push(currentEdgeSequence);
                 }
+                //console.log("A new edge sequence added")
                 currentEdgeSequence = new EdgeSequence;
                 myNode.edges.push(currentEdgeSequence);
             }
@@ -318,20 +323,23 @@ export function polyIntersect(verts1: Vector2D[], verts2: Vector2D[]): NodeData[
         // Fill the very last edgeSequence
         for (let i = next(lastEdgeIndex, polyVertices.length); i != firstCutEdgeIndex; i = next(i, polyVertices.length))
         {
+            //console.log(`   -> new edge point:(${polyVertices[i].x}, ${polyVertices[i].y})`);
             currentEdgeSequence.edgePoints.push(polyVertices[i]);
         }
+        //console.log(`   -> new edge point:(${polyVertices[firstCutEdgeIndex].x}, ${polyVertices[firstCutEdgeIndex].y})`);
         currentEdgeSequence.edgePoints.push(polyVertices[firstCutEdgeIndex]);
         currentEdgeSequence.nextNode = firstNode;
         firstNode.edges.push(currentEdgeSequence);
-
     };
+    //console.log("Creating edgesequences from 1st polygon")
     createEdgeSequences(edges1, verts1);
+    //console.log("Creating edgesequences from 2nd polygon")
     createEdgeSequences(edges2, verts2);
 
     // Go over the nodes, make sure that edges[] are sorted properly
     for (let n of intersectPoints)
     {
-        let edgeSeqAngle = (a: EdgeSequence): number => {
+        const edgeSeqAngle = (a: EdgeSequence): number => {
             let edgePoint = a.nextNode === n ? a.edgePoints[a.edgePoints.length - 1] : a.edgePoints[0];
             if (typeof edgePoint === "undefined")
             {
@@ -340,7 +348,7 @@ export function polyIntersect(verts1: Vector2D[], verts2: Vector2D[]): NodeData[
                     edgePoint = a.nextNode.position;
                 else
                 {
-                    let sourceNode = intersectPoints.find(candidate => candidate.edges.indexOf(a) !== -1);
+                    const sourceNode = intersectPoints.find(candidate => candidate !== n && candidate.edges.indexOf(a) !== -1);
                     edgePoint = sourceNode.position;
                 }
             }
@@ -352,7 +360,57 @@ export function polyIntersect(verts1: Vector2D[], verts2: Vector2D[]): NodeData[
     return intersectPoints;
 }
 
-export function union(verts1: Vector2D[], verts2: Vector2D[]) : Vector2D[]
+export function union(verts1: Vector2D[], verts2: Vector2D[]) : Vector2D[][]
 {
-    return [];
+    const intNodes : NodeData[] = polyIntersect(verts1, verts2);
+    let unionLoops : Vector2D[][] = [];
+    for (let node of intNodes)
+    {
+        while (true)
+        {
+            let myLoop : Vector2D[] = [];
+            // Find an unvisited edgeSequence that starts in this node
+            let mySeq = node.edges.find(val => val.nextNode !== node && !val.visited);
+            if (typeof mySeq === "undefined")
+                break;
+            myLoop.push(node.position);
+            mySeq.visited = true;
+            // Walk along edge loop to the next node
+            while(mySeq.nextNode !== node)
+            {
+                const nextNode = mySeq.nextNode;
+                // helper to get next index in nextNode.edges
+                const nextI = i => i == nextNode.edges.length - 1 ? 0 : i + 1;
+
+                myLoop = myLoop.concat(mySeq.edgePoints);
+                myLoop.push(nextNode.position);
+                // find the next edge sequence in the loop
+                // first find index of our current edge sequence
+                let seqIndex = nextNode.edges.findIndex(val => val === mySeq);
+                let nestCounter = 0;
+                // then look in nextNode.edges[] for the corresponding edge seq in the loop
+                let seqFoundGuard = false;
+                for (let i = nextI(seqIndex); i !== seqIndex; i = nextI(i))
+                {
+                    // We found the edge seq, if it's pointing away and the nesting counter is 0
+                    if (nextNode.edges[i].nextNode !== nextNode && nestCounter === 0)
+                    {
+                        mySeq = nextNode.edges[i];
+                        console.assert(!mySeq.visited, "Edge sequence shouldn't be visited");
+                        mySeq.visited = true;
+                        seqFoundGuard = true;
+                        break;
+                    }
+                    // modify the nesting counter
+                    nestCounter += nextNode.edges[i].nextNode === nextNode ? 1 : -1;
+                }
+                console.assert(seqFoundGuard, "Next edge sequence couldn't be found");
+            }
+
+            node.nodeLoops.push(myLoop);
+            const loopWind = windTest(myLoop);
+            unionLoops.push(myLoop);
+        }
+    }
+    return unionLoops;
 }
