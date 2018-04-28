@@ -115,12 +115,34 @@ describe("Polygon tools module", () => {
             testObj.to.satisfy(_.isArray);
 
             compareIntResults.call(this, expected, obj as T.NodeData[]);
-        })
+        });
+        Assertion.addMethod("vectorLoop", function(expected: (T.Vector2D|number[])[]) {
+            let obj = this._obj;
+
+            let testObj = new Assertion(obj);
+            testObj.to.satisfy(_.isArray);
+            testObj.length(expected.length);
+            const loopLength = expected.length;
+
+            let bias = obj.findIndex(val => vec2DEqual(val, arrOrVec2D(expected[0])));
+            this.assert(bias !== -1, "The loop doesn't have expected vertices",
+            "", expected, obj);
+            for (let i = 0; i < loopLength; ++i)
+            {
+                this.assert(vec2DEqual(obj[(bias+i)%loopLength], arrOrVec2D(expected[i])), 
+                "Wrong vertex in the loop, expected #{exp}, but found #{act}",
+                "",
+                expected[i], obj[(bias+i)%loopLength]);
+            }
+        });
     });
 
+    let atestCase1 = [[6, 1], [3, 3], [5, 5], [8, 4]];
+    let btestCase1 = [[9, 1], [6, 3], [9, 5]];
+    let atestCase2 = [[5, 5], [6, 4], [3, 2], [6, 0], [9, 1], [8, 4], [10, 4], [11, 1], [8, -1], [4, -1], [2, 2], [3, 4]];
+    let btestCase2 = [[7, 7], [10, 6], [10, 5], [9, 3], [8.5, 3.55], [8, 5], [7, 5], [1, 3], [2, 5], [5, 7]];
+
     it("polygon intersection", () => {
-        let atestCase1 = [[6, 1], [3, 3], [5, 5], [8, 4]];
-        let btestCase1 = [[9, 1], [6, 3], [9, 5]];
         let expResult = {
             nodes: [
                 {
@@ -154,8 +176,6 @@ describe("Polygon tools module", () => {
         let res = T.polyIntersect(atestCase1.map(array2Vector), btestCase1.map(array2Vector));
         expect(res).to.be.intersectResult(expResult);
 
-        let atestCase2 = [[5, 5], [6, 4], [3, 2], [6, 0], [9, 1], [8, 4], [10, 4], [11, 1], [8, -1], [4, -1], [2, 2], [3, 4]];
-        let btestCase2 = [[7, 7], [10, 6], [10, 5], [9, 3], [8.5, 3.55], [8, 5], [7, 5], [1, 3], [2, 5], [5, 7]];
         let expResult2 = {
             nodes: [
                 {
@@ -217,5 +237,10 @@ describe("Polygon tools module", () => {
         expect(T.windTest(btestCase2.map(array2Vector))).to.equal("ccw");
 
         expect(T.polyIntersect(atestCase2.map(array2Vector), btestCase2.map(array2Vector))).to.be.intersectResult(expResult2);
-    })
+    });
+
+    it("Polygon union", (done) => {
+        setTimeout(done, 500);
+        expect(T.union(atestCase1.map(array2Vector), btestCase1.map(array2Vector))).to.satisfy(_.isArray);
+    });
 })

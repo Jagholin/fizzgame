@@ -380,7 +380,7 @@ export function union(verts1: Vector2D[], verts2: Vector2D[]) : Vector2D[][]
             {
                 const nextNode = mySeq.nextNode;
                 // helper to get next index in nextNode.edges
-                const nextI = i => i == nextNode.edges.length - 1 ? 0 : i + 1;
+                const nextI = i => (i == nextNode.edges.length - 1) ? 0 : (i + 1);
 
                 myLoop = myLoop.concat(mySeq.edgePoints);
                 myLoop.push(nextNode.position);
@@ -402,7 +402,7 @@ export function union(verts1: Vector2D[], verts2: Vector2D[]) : Vector2D[][]
                         break;
                     }
                     // modify the nesting counter
-                    nestCounter += nextNode.edges[i].nextNode === nextNode ? 1 : -1;
+                    nestCounter += (nextNode.edges[i].nextNode === nextNode) ? 1 : -1;
                 }
                 console.assert(seqFoundGuard, "Next edge sequence couldn't be found");
             }
